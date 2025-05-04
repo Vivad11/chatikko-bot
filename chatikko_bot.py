@@ -1,8 +1,8 @@
-import logging
+iimport logging
+import os
 from telegram import Update
 from telegram.ext import ApplicationBuilder, ContextTypes, MessageHandler, filters
-import together_ai_sdk  # Импортируем SDK для Together AI
-import os
+from together import Together  # ✅ Новый импорт SDK
 
 # Настройка логирования
 logging.basicConfig(
@@ -12,10 +12,10 @@ logging.basicConfig(
 
 # Получение токенов из переменных окружения
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
-TOGETHER_API_KEY = os.getenv("TOGETHER_API_KEY")  # Используем ключ от Together AI
+TOGETHER_API_KEY = os.getenv("TOGETHER_API_KEY")
 
 # Инициализация клиента Together AI
-client = together_ai_sdk.Client(api_key=TOGETHER_API_KEY)
+client = Together(api_key=TOGETHER_API_KEY)
 
 # Обработчик входящих сообщений
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -23,15 +23,15 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     logging.info(f"Получено сообщение от пользователя: {user_message}")
 
     try:
-        # Используем метод для отправки запроса к Together AI
-        response = client.chat.create(
-            model="together-ai-gpt-3.5",  # Используй модель, предоставленную Together AI
+        # Отправка запроса к Together AI
+        response = client.chat.completions.create(
+            model="meta-llama/Llama-3-8b-chat-hf",  # ✅ Пример рабочей модели
             messages=[{"role": "user", "content": user_message}]
         )
 
-        # Отправляем ответ пользователю
-        reply_text = response["choices"][0]["message"]["content"]
+        reply_text = response.choices[0].message.content
         await update.message.reply_text(reply_text)
+
     except Exception as e:
         logging.error(f"Ошибка при запросе к Together AI: {e}")
         await update.message.reply_text("Произошла ошибка. Попробуйте позже.")
