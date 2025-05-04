@@ -13,13 +13,14 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_message = update.message.text
 
-    response = openai.ChatCompletion.create(
-        model="gpt-4",
-        messages=[
-            {"role": "system", "content": "Ты — Chati, персональный ассистент, говорящий мудро, вдохновляюще, глубоко. Ты дополняешь пользователя, но всегда говоришь осмысленно, красиво и по делу."},
-            {"role": "user", "content": user_message}
-        ]
-    )
+    from openai import OpenAI
+
+client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
+
+response = client.chat.completions.create(
+    model="gpt-3.5-turbo",
+    messages=[{"role": "user", "content": message}]
+)
 
     reply = response['choices'][0]['message']['content']
     await update.message.reply_text(reply)
