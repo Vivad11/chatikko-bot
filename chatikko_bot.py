@@ -1,8 +1,8 @@
-iimport logging
+import logging
 import os
 from telegram import Update
 from telegram.ext import ApplicationBuilder, ContextTypes, MessageHandler, filters
-from together import Together  # ✅ Новый импорт SDK
+from together import Together
 
 # Настройка логирования
 logging.basicConfig(
@@ -23,12 +23,10 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     logging.info(f"Получено сообщение от пользователя: {user_message}")
 
     try:
-        # Отправка запроса к Together AI
         response = client.chat.completions.create(
-            model="meta-llama/Llama-3-8b-chat-hf",  # ✅ Пример рабочей модели
+            model="meta-llama/Llama-3-8b-chat-hf",  # Модель Together AI
             messages=[{"role": "user", "content": user_message}]
         )
-
         reply_text = response.choices[0].message.content
         await update.message.reply_text(reply_text)
 
@@ -39,7 +37,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # Основная функция запуска бота
 if __name__ == '__main__':
     if not TELEGRAM_BOT_TOKEN or not TOGETHER_API_KEY:
-        raise ValueError("Переменные окружения TELEGRAM_BOT_TOKEN и TOGETHER_API_KEY обязательны!")
+        raise ValueError("TELEGRAM_BOT_TOKEN и TOGETHER_API_KEY обязательны!")
 
     app = ApplicationBuilder().token(TELEGRAM_BOT_TOKEN).build()
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
