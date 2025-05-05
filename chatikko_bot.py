@@ -1,7 +1,6 @@
 import logging
 import os
-from flask import Flask
-from threading import Thread
+from flask import Flask, request
 from telegram import Update
 from telegram.ext import ApplicationBuilder, ContextTypes, MessageHandler, filters
 from together import Together
@@ -12,6 +11,13 @@ app_flask = Flask('')
 @app_flask.route('/')
 def home():
     return "Bot is alive"
+
+@app_flask.route(f'/{os.getenv("TELEGRAM_BOT_TOKEN")}', methods=['POST'])
+def webhook():
+    data = request.get_json()
+    update = Update.de_json(data, app.bot)
+    app.update_queue.put(update)
+    return 'OK', 200
 
 def run():
     app_flask.run(host='0.0.0.0', port=int(os.environ.get("PORT", 10000)))
@@ -56,4 +62,8 @@ if __name__ == '__main__':
     app = ApplicationBuilder().token(TELEGRAM_BOT_TOKEN).build()
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
     logging.info("Бот запущен и готов принимать сообщения.")
-    app.run_polling()
+    
+    # Webhook
+    app.bot.set_webhook(f"https://{os.getenv('RENDER_URL')}/{TELEGRAM_BOT_TOKEN}")
+    app.run_polling(drop_pending_updates=True)  # Убедись, что бот не пропустит сообщения
+
