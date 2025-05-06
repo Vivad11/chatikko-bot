@@ -1,9 +1,11 @@
 import logging
 import os
+import asyncio
 from flask import Flask, request
 from telegram import Update
 from telegram.ext import ApplicationBuilder, ContextTypes, MessageHandler, filters
 from together import Together
+from threading import Thread
 
 # Запуск простого Flask-сервера
 app_flask = Flask('')
@@ -15,6 +17,7 @@ def home():
 @app_flask.route(f'/{os.getenv("TELEGRAM_BOT_TOKEN")}', methods=['POST'])
 def webhook():
     data = request.get_json()
+    logging.info(f"Received webhook data: {data}")  # Логирование полученных данных
     update = Update.de_json(data, app.bot)
     app.update_queue.put(update)
     return 'OK', 200
@@ -42,7 +45,9 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_message = update.message.text
     logging.info(f"Получено сообщение от пользователя: {user_message}")
     try:
-        response = client.chat.completions.create(
+        # Используем asyncio.to_thread для синхронного API
+        response = await asyncio.to_thread(
+            client.chat.completions.create,
             model="meta-llama/Llama-3-8b-chat-hf",
             messages=[{"role": "user", "content": user_message}]
         )
@@ -66,4 +71,3 @@ if __name__ == '__main__':
     # Webhook
     app.bot.set_webhook(f"https://{os.getenv('RENDER_URL')}/{TELEGRAM_BOT_TOKEN}")
     app.run_polling(drop_pending_updates=True)  # Убедись, что бот не пропустит сообщения
-
